@@ -1,0 +1,276 @@
+module nat
+
+import bool
+import pair
+
+
+{- We now introduce a type to represent the natural numbers using
+Peano arithmetic.
+In this arithmetic, there are two especially important rules
+- zero is a natural number
+- the successor of any natural number is a natural number
+
+From this pair of rules arises an infinity of natural numbers. Zero is
+a natural number, and the successor of any natural number is a natural
+number, so the successor of zero is a natural number; and now, because
+the successor of zero is a natural number, its successor, i.e., the
+successor of (the successor of zero) is one too; ad infinitum -}
+
+{- We capture this idea with the following deceptively simple data
+type definition. What it says is that nat is a type, and there are two
+
+ways to construct a nat. One is to use the constructor, O. The other
+is to apply the constructor S to a value that is already known to be
+of type nat.  Because O is already known to be of type nat, you can
+thus apply S to O (yielding the term (S O)) and the result is also of
+type nat. And now because it is a value of type nat, you can apply S
+to it to get another value of type nat. Ad infinitum. -}
+
+||| A data type to represent the natural numbers.  We use a lower case
+||| "n" in the name to distinguish our nat type from Idris's Nnat type
+data nat = O | S nat
+
+-- HOMEWORK #3: In the REPL ask what are the types of nat, O and S.
+-- Be sure you understand the answers!
+--ANSWER:  :t nat is type nat, :t O is type nat, :t S doesn't work,
+-- but :t S O is of type nat again 
+
+-- zero
+z: nat
+z = O
+
+-- one
+o: nat
+o = S O
+
+-- two 
+t: nat
+t = S (S O)
+
+-- three
+r: nat
+r = S t
+
+-- HOMEWORK #5: Make up some examples of your own. Add them below this
+-- comment.
+four: nat
+four= S (S(t))
+
+five: nat
+five = S(four)
+
+-- HOMEWORK #6: In the REPL, evaluate the types and values of z, o, t
+-- and r, as well as your own values. (E.g., ":t o" will report the
+-- type of o, and "o" will report its value (along with its type). Be
+-- sure you understand the answers. In particular be sure you
+-- understand how the variable expression, "r" is evaluated! Yup: r is
+-- unfolded to S t; t is unfolded to S (S O); so the whole expression 
+-- unfolds to S (S (S O)). Be able to explain this evaluation proces
+
+
+||| returns true if the argument is (represents) zero, otherwise false
+isZero: nat -> bool
+isZero O = true
+isZero _ = false
+
+-- HOMEWORK #7 Bind x to the result of applying isZero to r. Add your
+-- code below this comment.
+x: bool
+x = isZero r
+
+||| returns the successor of any given nat
+succ: nat -> nat
+succ n = S n
+
+-- HOMEWORK #8 Bind y to the result of applying succ to O. Add code here.
+y: nat
+y= succ O
+
+||| returns the predecessor of any given nat
+pred: nat -> nat
+pred O = O
+pred (S n) = n
+
+{- Next we define a function that when given a natural number returns
+true if it's even and false otherwise. It is very, very important to
+understand this example, your first example of a recursive function -}
+
+||| return true if the argument is even otherwise false
+evenb: nat -> bool
+evenb O = true
+evenb (S O) = false
+evenb (S (S n)) = evenb n
+
+--in class example 
+oddb: nat -> bool
+oddb n= not (evenb n) 
+
+-- HOMEWORK #9 Bind a, b, c, d, e respectively to the results of
+-- applying evenb to O, (S O), (S (S O)) r, and (S r),
+-- respectively. Add your code here.
+
+a:bool
+a =evenb O
+
+b: bool
+b= evenb (S O)
+
+c: bool
+c = evenb (S (S O)) 
+
+d: bool
+d = evenb r
+
+e: bool
+e = evenb (S r) 
+
+--HOMEWORK #10 In English, describe all of the steps involved in
+--evaluating the function application expression, evenb (S r). 
+--The idea is that you keep on applying reduction (simplification)
+--rules until you get to a value that cannot be reduced further. 
+
+{-The first step is  to "unfold" (S r). r was previously defined in
+our code as (S t). t was defined as S(S O). So we can put that
+together as S(S(S O)), which we can now apply the function evenb
+to. We know that evenb S(O) is defined to be false. And evenb S(S(n)) is
+defined to be evenb n. n is S(O) so evenb (S r) is false. Three is an
+odd number because it is a two-time successor of 1, which is false.-}
+
+-- HOMEWORK #11  
+
+-- addp (mkPair O O) ==> O
+-- addp (mkPair O (S (S O))) ==> S (S O)
+-- addp (mkPair (S O) O) ==> S O
+-- addp (mkPair (S (S O)) (S (S (S O)))) ==> S (S (S (S (S O))))
+
+--Notice how we
+-- used evenb within its own definition! The idea is that we can
+-- compute evenb for a big number by returning the result that we get
+-- when we apply it to a number that is two less than the number that
+-- we started with. You're going to use a similar idea here.
+
+  
+||| given a pair of natural numbers, return its sum
+addp: pair nat nat -> nat
+addp (mkPair O m) = m
+addp (mkPair (S n) m) = S (addp (mkPair n m))
+
+
+--HW #1 due 9/23 Multiplication
+--zero times anything is zero
+--(one more than n) times m is___
+--Answer in English:  m plus  n times m 
+
+||| given a pair of natural numbers, return its product
+multp: pair nat nat -> nat
+multp (mkPair O m) = O
+multp (mkPair (S n) m) = addp (mkPair (multp (mkPair n m)) m) 
+
+  {-Hw #2 factorial problem
+-Many functions are defined recursively. The factorial function is one. That's your base case. The recursive case is that the factorial of any la6rger natural number is that number times the factorial of its predecessor. Put another way, the factorial of the successor (S n) of any natural number is (S n) times the factorial of n.-}
+factp: nat -> nat
+factp O = S(O)
+factp (S n) = multp (mkPair (S n) (factp (n)) )
+
+
+--In class work : substitution
+|||given a pair of natural numbers, return thier difference
+|||if a is less than or equal to b the answer is zero
+subtp: pair nat nat -> nat
+subtp (mkPair O m) = O
+subtp (mkPair n O) = n
+subtp (mkPair (S n) (S m)) = subtp (mkPair n m) 
+
+
+--hw due 9/25 
+--Part 2
+-- hw 5
+|||given a pair of natural numbers, (x, n), return the value of x raised to the nth power
+expp: pair nat nat -> nat
+expp (mkPair O O ) = O
+expp (mkPair O n) = O
+expp (mkPair x O) = S O
+expp (mkPair x (S n))= multp (mkPair x (expp (mkPair x n))) 
+
+--hw 6
+|||given a pair of natural numbers, (a, b), return true if a is less than or equal to b, otherwise return false
+lep: pair nat nat -> bool
+lep (mkPair O m) = true
+lep (mkPair n O)= false
+lep (mkPair (S n) (S m)) = lep (mkPair n m) 
+
+--hw 7
+|||given a pair of natural numbers, (a, b), return true if a is equal to be, otherwise return false
+eqp: pair nat nat -> bool
+eqp (mkPair O O) = true
+eqp (mkPair O m) = false
+eqp (mkPair n O) = false
+eqp (mkPair (S n) (S m)) = eqp (mkPair n m)
+
+--hw 8
+|||given a pair of natural numbers, (a, b), return true if a is greater than b, otherwise return false
+gtp: pair nat nat -> bool
+gtp (mkPair n m) = not (lep (mkPair n m))
+--hw 9
+||| given a pair of natural numbers, (a, b), return true of a is greater than or equal to b
+gep: pair nat nat -> bool
+gep (mkPair n m) = orp (mkPair (gtp (mkPair n m)) (eqp (mkPair n m)) )
+
+
+--hw 10
+|||given a pair of natural numbers, (a, b), return true if a is less than b
+ltp: pair nat nat -> bool
+ltp (mkPair n m) = not (gep (mkPair n m))
+
+--In class Fibonacci
+--0,1, n-first +n- second  ...
+--fib: nat -> nat
+--fib O = S(O)
+--fib n = fib (addp(mkPair (S n) (S (S (n)) )) ) 
+
+--rewritten binary functions 
+
+add: nat -> nat -> nat
+add O m = m
+add (S n) m = S (add n m)
+
+pf: nat -> nat
+pf = add (S (S O))
+
+mult: nat -> nat -> nat
+mult O m = O
+mult (S n) m =  add m ( mult n m)
+
+fact: nat -> nat 
+fact O = S(O)
+fact (S n) = mult (S n) (fact n) 
+
+sub: nat-> nat -> nat
+sub  O m= O
+sub  n O = n
+sub (S n) (S m) = sub n m 
+
+exp:  nat-> nat -> nat
+exp  O n = O
+exp  x O= S O
+exp x (S n)= mult x (exp x n)
+
+le: nat -> nat -> bool
+le  O m = true
+le n O= false
+le (S n) (S m) = le n m 
+
+eq: nat -> nat -> bool
+eq O O = true
+eq O m = false
+eq n O = false
+eq (S n) (S m) = eq n m
+
+gt: nat-> nat -> bool
+gt n m = not (le  n m)
+
+ge:  nat-> nat -> bool
+ge  n m = or  (gt n m) (eq  n m)
+
+lt: nat-> nat -> bool
+lt  n m= not (ge n m)
